@@ -1,2 +1,32 @@
 opentelemetry-collector:
   mode: deployment
+  fullnameOverride: otel-collector-gateway
+  config:
+    exporters:
+      otlp/newrelic:
+        endpoint: ${env:NEW_RELIC_OTLP_ENDPOINT}
+        headers:
+          api-key: ${env:NEW_RELIC_API_KEY}
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/newrelic]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/newrelic]
+
+  extraEnvs:
+    - name: NEW_RELIC_OTLP_ENDPOINT
+      value: "https://otlp.eu01.nr-data.net:4317"
+    - name: NEW_RELIC_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: newrelic-otlp
+          key: api-key

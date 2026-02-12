@@ -73,3 +73,80 @@ creation succeeds without additional parameters. Gateway overrides set `mode: de
 To create the gateway app, repeat the above and use a gateway values file override via
 the ApplicationSet (recommended). If you must create it manually, use the same chart path
 and ensure `opentelemetry-collector.mode` resolves to `deployment` via the gateway values file.
+
+## Java Agent (PoC) - Example (order-service)
+
+The application Helm charts (e.g., `order-service`) use an init container to
+download the OpenTelemetry Java agent and `JAVA_TOOL_OPTIONS` to enable it.
+This section mirrors the values and template style used by those charts.
+
+### Values (app chart)
+
+```yaml
+otel:
+  endpoint: "http://otel-collector-daemon.observability-dev.svc.cluster.local:4317"
+  protocol: "grpc"
+  tracesExporter: "otlp"
+  logsExporter: "otlp"
+  metricsExporter: "otlp"
+  logLevel: "debug"
+```
+
+### Deployment Template (app chart)
+
+```yaml
+initContainers:
+  - name: otel-agent
+    image: curlimages/curl:8.5.0
+    command: ["sh", "-c"]
+    args:
+      - >
+        curl -L
+        https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.20.1/opentelemetry-javaagent.jar
+        -o /otel/javaagent.jar
+    volumeMounts:
+      - name: otel-agent
+        mountPath: /otel
+
+containers:
+  - name: my-service
+    env:
+      - name: JAVA_TOOL_OPTIONS
+        value: "-javaagent:/otel/javaagent.jar"
+      - name: OTEL_SERVICE_NAME
+        value: my-service
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: {{ .Values.otel.endpoint }}
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: {{ .Values.otel.protocol }}
+      - name: OTEL_TRACES_EXPORTER
+        value: {{ .Values.otel.tracesExporter }}
+      - name: OTEL_LOG_LEVEL
+        value: {{ .Values.otel.logLevel }}
+      - name: OTEL_LOGS_EXPORTER
+        value: {{ .Values.otel.logsExporter }}
+      - name: OTEL_METRICS_EXPORTER
+        value: {{ .Values.otel.metricsExporter }}
+    volumeMounts:
+      - mountPath: /otel
+        name: otel-agent
+
+volumes:
+  - name: otel-agent
+    emptyDir: {}
+```
+
+### Notes
+
+1. Adjust the daemonset service DNS name and namespace per environment.
+2. If you pin the agent version, update the URL in the init container.
+
+## New Relic Secret
+
+Gateway collector expects a Kubernetes secret named `newrelic-otlp` in each
+`observability-<env>` namespace with key `api-key`:
+
+```bash
+kubectl -n observability-dev create secret generic newrelic-otlp \
+  --from-literal=api-key="<YOUR_NR_API_KEY>"
+```
