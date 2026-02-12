@@ -1,0 +1,23 @@
+opentelemetry-collector:
+  mode: deployment
+  replicaCount: 1
+
+  config:
+    service:
+      pipelines:
+        traces:
+          processors: [tail_sampling, batch]
+
+    processors:
+      tail_sampling:
+        decision_wait: 5s
+        num_traces: 20000
+        policies:
+          - name: errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: baseline
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 100
