@@ -23,7 +23,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/<you>/observability-gitops.git
+        repoURL: https://github.com/medstersrc/observability-gitops.git
         targetRevision: main
         # Chart path is relative to the repo root.
         path: helm/otel-collector
