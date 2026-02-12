@@ -1,4 +1,6 @@
 opentelemetry-collector:
+  # Default mode to satisfy chart validation. Gateway overrides set deployment.
+  mode: daemonset
   image:
     repository: otel/opentelemetry-collector-contrib
     tag: "0.145.0"
