@@ -84,7 +84,10 @@ This section mirrors the values and template style used by those charts.
 
 ```yaml
 otel:
-  endpoint: "http://otel-collector-daemon.observability-dev.svc.cluster.local:4317"
+  endpoint: "" # optional override
+  collectorService: "otel-collector-daemon"
+  collectorNamespace: "" # defaults to .Release.Namespace
+  collectorPort: 4317
   protocol: "grpc"
   tracesExporter: "otlp"
   logsExporter: "otlp"
@@ -116,7 +119,7 @@ containers:
       - name: OTEL_SERVICE_NAME
         value: my-service
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: {{ .Values.otel.endpoint }}
+        value: {{ default (printf "http://%s.%s.svc.cluster.local:%v" .Values.otel.collectorService (default .Release.Namespace .Values.otel.collectorNamespace) .Values.otel.collectorPort) .Values.otel.endpoint | quote }}
       - name: OTEL_EXPORTER_OTLP_PROTOCOL
         value: {{ .Values.otel.protocol }}
       - name: OTEL_TRACES_EXPORTER
@@ -138,8 +141,13 @@ volumes:
 
 ### Notes
 
-1. Adjust the daemonset service DNS name and namespace per environment.
-2. If you pin the agent version, update the URL in the init container.
+1. Daemonset deployment exposes a ClusterIP service named `otel-collector-daemon`.
+2. Validate service presence per environment namespace:
+   `kubectl get svc -n observability-dev otel-collector-daemon`
+3. Application charts default OTLP endpoint to:
+   `http://otel-collector-daemon.<release-namespace>.svc.cluster.local:4317`
+4. Override `otel.endpoint` only when you intentionally need a different target.
+5. If you pin the agent version, update the URL in the init container.
 
 ## New Relic Secret
 
