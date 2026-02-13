@@ -158,3 +158,11 @@ Gateway collector expects a Kubernetes secret named `newrelic-otlp` in each
 kubectl -n observability-dev create secret generic newrelic-otlp \
   --from-literal=api-key="<YOUR_NR_API_KEY>"
 ```
+
+## Daemon Service Alias
+
+When collector release naming differs from `otel-collector-daemon`, apply the alias Service:
+
+```bash
+kubectl apply -f k8s/observability-dev/otel-collector-daemon-service.yaml
+```
