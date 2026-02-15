@@ -67,12 +67,13 @@ Defined in `helm/otel-collector/values/common/gateway.yaml`:
 3. Sensitive key masking (`redaction.blocked_key_patterns`)
 4. Sensitive value masking (`redaction.blocked_values`)
 5. Tail sampling (baseline defaults to 100%, env-overridable)
+6. Span-to-metrics connector (`spanmetrics`) for trace-derived metrics in dashboards/alerts
 
 ### Environment-Specific Overrides
 
 Keep these small and focused:
 
-1. `dev`: baseline sampling is set to 50%
+1. `dev`: baseline sampling is set to 60%
 2. `sit`, `uat`, `prod`: baseline sampling is set to 10%
 3. `prod`: traces and logs explicitly keep volume controls and redaction enabled in pipeline processors
 

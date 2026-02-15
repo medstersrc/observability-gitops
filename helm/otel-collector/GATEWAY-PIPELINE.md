@@ -13,6 +13,7 @@ Traces pipeline:
 4. `memory_limiter`
 5. `batch`
 6. `otlp/newrelic`
+7. `spanmetrics` connector output
 
 Logs pipeline:
 1. `filter/logs_volume`
@@ -21,6 +22,13 @@ Logs pipeline:
 4. `memory_limiter`
 5. `batch`
 6. `otlp/newrelic`
+
+Metrics pipeline:
+1. `otlp` receiver input
+2. `spanmetrics` connector input
+3. `memory_limiter`
+4. `batch`
+5. `otlp/newrelic`
 
 ## Shared And Environment Values
 
@@ -41,6 +49,7 @@ In `values/common/gateway.yaml`:
 - Redaction by attribute key patterns (`blocked_key_patterns`).
 - Redaction by value regex patterns (`blocked_values`).
 - Tail sampling with an overridable baseline percentage.
+- Span-to-metrics conversion via `spanmetrics` connector (for error-rate/volume dashboards).
 
 ## Feature Toggle Pattern
 
