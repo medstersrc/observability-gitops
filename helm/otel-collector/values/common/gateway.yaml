@@ -6,9 +6,6 @@ opentelemetry-collector:
     connectors:
       spanmetrics:
         dimensions:
-          - name: service.name
-          - name: span.name
-          - name: status.code
           - name: job.name
 
     exporters:
