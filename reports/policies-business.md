@@ -1,6 +1,6 @@
 # Gateway Policy Report (Business View)
 
-Generated: 2026-02-15T17:14:28.159Z
+Generated: stable
 
 ## DEV
 

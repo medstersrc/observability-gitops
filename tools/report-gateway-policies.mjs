@@ -30,11 +30,11 @@ function toRuleRecord(env, rule) {
 }
 
 function toBusinessMarkdown(records) {
-  const now = new Date().toISOString();
+  const generatedAt = process.env.POLICY_REPORT_TIMESTAMP || "stable";
   const lines = [];
   lines.push("# Gateway Policy Report (Business View)");
   lines.push("");
-  lines.push(`Generated: ${now}`);
+  lines.push(`Generated: ${generatedAt}`);
   lines.push("");
 
   for (const env of ENVS) {
@@ -90,6 +90,7 @@ async function main() {
   const repoRoot = process.cwd();
   const reportsDir = path.resolve(repoRoot, "reports");
   fs.mkdirSync(reportsDir, { recursive: true });
+  const generatedAt = process.env.POLICY_REPORT_TIMESTAMP || "stable";
 
   const records = [];
   for (const env of ENVS) {
@@ -98,7 +99,7 @@ async function main() {
   }
 
   const technical = {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     envs: ENVS,
     policies: records,
   };
