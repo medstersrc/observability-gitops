@@ -35,7 +35,7 @@ spec:
             - values/{{env}}/gateway.yaml
       destination:
         server: https://kubernetes.default.svc
-        namespace: {{ns}}
+        namespace: "{{ns}}"
       syncPolicy:
         automated:
           prune: true
