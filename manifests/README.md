@@ -2,25 +2,27 @@
 
 This directory contains raw Kubernetes manifests that are not Helm charts.
 
-## Argo CD ApplicationSets
+## Current Argo CD Layout
 
-ApplicationSets for OpenTelemetry Collector are in:
+Environment-scoped ApplicationSet manifests now live under:
 
-- `manifests/argocd/otel-collector-daemon-appset.yaml`
-- `manifests/argocd/otel-collector-gateway-appset.yaml`
+- `app/manifests/dev`
+- `app/manifests/sit`
+- `app/manifests/uat`
+- `app/manifests/prod`
 
-They deploy the Helm chart at `helm/otel-collector` and use environment values from:
+Each environment path contains:
 
-- `helm/otel-collector/values/common/gateway.yaml` (gateway shared pipeline)
-- `helm/otel-collector/values/<env>/daemon.yaml`
-- `helm/otel-collector/values/<env>/gateway.yaml`
+- `otel-collector-daemon-appset.yaml`
+- `otel-collector-gateway-appset.yaml`
 
-## Apply
+Point one Argo CD bootstrap `Application` per environment to its folder.
+Example: dev bootstrap app -> `app/manifests/dev`.
 
-```bash
-kubectl apply -f manifests/argocd/otel-collector-daemon-appset.yaml
-kubectl apply -f manifests/argocd/otel-collector-gateway-appset.yaml
-```
+## Legacy Path
+
+`manifests/argocd` is retained for compatibility during migration.
+New deployments should use `app/manifests/<env>`.
 
 ## Verify
 

@@ -1,0 +1,51 @@
+name: Promote Uat To Prod
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Promote Uat To Prod
+        run: node tools/promote-env.mjs uat prod
+
+      - name: Validate PROD Templates
+        run: |
+          helm template otel-collector-daemon helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/prod/daemon.yaml > /dev/null
+          helm template otel-collector-gateway helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/common/gateway.yaml \
+            -f helm/otel-collector/values/prod/gateway.yaml > /dev/null
+
+      - name: Create Promotion PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "promote: uat -> prod"
+          branch: "promote/uat-to-prod-${{ github.run_id }}"
+          title: "Promote UAT to PROD"
+          body: "Automated promotion from uat to prod."
+          labels: promotion
+          add-paths: |
+            policies/gateway/env/prod.mjs
+            helm/otel-collector/values/prod/daemon.yaml
+            helm/otel-collector/values/prod/gateway.yaml
+            reports/policies-business.md
+            reports/policies-technical.json

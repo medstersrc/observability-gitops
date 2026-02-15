@@ -1,31 +1,28 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: otel-collector-daemon
+  name: otel-collector-gateway-dev
   namespace: argocd
 spec:
   generators:
     - list:
-        # Each element becomes a separate Argo CD Application.
         elements:
           - env: dev
             ns: observability-dev
   template:
     metadata:
-      # Application name is templated per environment.
-      name: otel-collector-daemon-{{env}}
+      name: otel-collector-gateway-{{env}}
     spec:
       project: default
       source:
         repoURL: https://github.com/medstersrc/observability-gitops.git
         targetRevision: main
-        # Chart path is relative to the repo root.
         path: helm/otel-collector
         helm:
           valueFiles:
             - values.yaml
-            # Values files are resolved relative to the chart path.
-            - values/{{env}}/daemon.yaml
+            - values/common/gateway.yaml
+            - values/{{env}}/gateway.yaml
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{ns}}"
