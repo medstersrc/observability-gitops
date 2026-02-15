@@ -13,7 +13,7 @@ opentelemetry-collector:
             name: 'baseline'
             type: 'probabilistic'
             probabilistic:
-              sampling_percentage: 50
+              sampling_percentage: 60
       'transform/order-service_userEmail_mask':
         error_mode: 'ignore'
         log_statements:
