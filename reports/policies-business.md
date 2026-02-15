@@ -4,7 +4,7 @@ Generated: stable
 
 ## DEV
 
-### DEV-SAMPLING-001 - Dev baseline sampling at 50%
+### DEV-SAMPLING-001 - Dev baseline sampling at 60%
 
 - Owner: platform-observability
 - Purpose: Limit trace volume while preserving enough data for debugging.
@@ -12,6 +12,7 @@ Generated: stable
 - Action: sample
 - Services: *
 - Namespaces: *
+- Sampling: 60%
 
 ### DEV-PIPELINE-001 - Dev minimal volume controls
 
@@ -50,6 +51,7 @@ Generated: stable
 - Action: sample
 - Services: *
 - Namespaces: *
+- Sampling: 10%
 
 ## UAT
 
@@ -61,6 +63,7 @@ Generated: stable
 - Action: sample
 - Services: *
 - Namespaces: *
+- Sampling: 10%
 
 ## PROD
 
@@ -72,6 +75,7 @@ Generated: stable
 - Action: sample
 - Services: *
 - Namespaces: *
+- Sampling: 10%
 
 ### PROD-PIPELINE-001 - Prod volume controls and redaction enabled
 

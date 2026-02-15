@@ -8,14 +8,14 @@ import { tailSampling } from "../modules/sampling.mjs";
 export const rules = [
   {
     id: "DEV-SAMPLING-001",
-    name: "Dev baseline sampling at 50%",
+    name: "Dev baseline sampling at 60%",
     owner: "platform-observability",
     purpose: "Limit trace volume while preserving enough data for debugging.",
     signal: "traces",
     action: "sample",
     services: ["*"],
     namespaces: ["*"],
-    fragment: tailSampling(50),
+    fragment: tailSampling(60),
   },
   {
     id: "DEV-PIPELINE-001",
