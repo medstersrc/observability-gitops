@@ -25,6 +25,13 @@ jobs:
       - name: Generate Policy Reports
         run: node tools/report-gateway-policies.mjs
 
+      - name: Verify Generated Files Are Committed
+        run: git diff --exit-code -- helm/otel-collector/values/dev/gateway.yaml helm/otel-collector/values/sit/gateway.yaml helm/otel-collector/values/uat/gateway.yaml helm/otel-collector/values/prod/gateway.yaml reports/policies-business.md reports/policies-technical.json
+
+      - name: Generate Timestamped Report Artifacts
+        run: |
+          POLICY_REPORT_TIMESTAMP=${{ github.run_id }} node tools/report-gateway-policies.mjs
+
       - name: Upload Policy Report Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -32,6 +39,3 @@ jobs:
           path: |
             reports/policies-business.md
             reports/policies-technical.json
-
-      - name: Verify Generated Files Are Committed
-        run: git diff --exit-code -- helm/otel-collector/values/dev/gateway.yaml helm/otel-collector/values/sit/gateway.yaml helm/otel-collector/values/uat/gateway.yaml helm/otel-collector/values/prod/gateway.yaml reports/policies-business.md reports/policies-technical.json
