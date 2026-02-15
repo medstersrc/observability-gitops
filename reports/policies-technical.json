@@ -1,0 +1,131 @@
+{
+  "generatedAt": "2026-02-15T17:14:28.157Z",
+  "envs": [
+    "dev",
+    "sit",
+    "uat",
+    "prod"
+  ],
+  "policies": [
+    {
+      "env": "dev",
+      "id": "DEV-SAMPLING-001",
+      "name": "Dev baseline sampling at 50%",
+      "owner": "platform-observability",
+      "purpose": "Limit trace volume while preserving enough data for debugging.",
+      "signal": "traces",
+      "action": "sample",
+      "services": [
+        "*"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "dev",
+      "id": "DEV-PIPELINE-001",
+      "name": "Dev minimal volume controls",
+      "owner": "platform-observability",
+      "purpose": "Keep only core volume-control processors in dev pipelines.",
+      "signal": "traces+logs",
+      "action": "filter",
+      "services": [
+        "*"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "dev",
+      "id": "DEV-MASK-001",
+      "name": "Mask order-service userEmail in logs",
+      "owner": "platform-observability",
+      "purpose": "Prevent plain-text email exposure in dev logs for order-service.",
+      "signal": "logs",
+      "action": "mask",
+      "services": [
+        "order-service"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "dev",
+      "id": "DEV-MASK-002",
+      "name": "Mask payment-service clientId in log body",
+      "owner": "platform-observability",
+      "purpose": "Remove clientId values in payment-service log messages in dev.",
+      "signal": "logs",
+      "action": "mask",
+      "services": [
+        "payment-service"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "sit",
+      "id": "SIT-SAMPLING-001",
+      "name": "SIT baseline sampling at 10%",
+      "owner": "platform-observability",
+      "purpose": "Reduce telemetry cost and noise in SIT.",
+      "signal": "traces",
+      "action": "sample",
+      "services": [
+        "*"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "uat",
+      "id": "UAT-SAMPLING-001",
+      "name": "UAT baseline sampling at 10%",
+      "owner": "platform-observability",
+      "purpose": "Reduce telemetry cost and noise in UAT.",
+      "signal": "traces",
+      "action": "sample",
+      "services": [
+        "*"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "prod",
+      "id": "PROD-SAMPLING-001",
+      "name": "Prod baseline sampling at 10%",
+      "owner": "platform-observability",
+      "purpose": "Control cost while preserving error traces and representative baseline.",
+      "signal": "traces",
+      "action": "sample",
+      "services": [
+        "*"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    },
+    {
+      "env": "prod",
+      "id": "PROD-PIPELINE-001",
+      "name": "Prod volume controls and redaction enabled",
+      "owner": "platform-observability",
+      "purpose": "Apply volume filtering and sensitive-data redaction in production pipelines.",
+      "signal": "traces+logs",
+      "action": "filter+redact",
+      "services": [
+        "*"
+      ],
+      "namespaces": [
+        "*"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+name: Policy Report
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate-policy-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Render Gateway Values
+        run: |
+          node tools/render-gateway-values.mjs dev
+          node tools/render-gateway-values.mjs sit
+          node tools/render-gateway-values.mjs uat
+          node tools/render-gateway-values.mjs prod
+
+      - name: Generate Policy Reports
+        run: node tools/report-gateway-policies.mjs
+
+      - name: Upload Policy Report Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-reports
+          path: |
+            reports/policies-business.md
+            reports/policies-technical.json
+
+      - name: Verify Generated Files Are Committed
+        run: git diff --exit-code -- helm/otel-collector/values/dev/gateway.yaml helm/otel-collector/values/sit/gateway.yaml helm/otel-collector/values/uat/gateway.yaml helm/otel-collector/values/prod/gateway.yaml reports/policies-business.md reports/policies-technical.json

@@ -12,7 +12,9 @@ Both modes use a single wrapper chart and different values overrides.
 - `helm/otel-collector`  
   Wrapper chart that depends on `opentelemetry-collector` and hosts shared defaults.
 - `manifests/argocd`  
-  Argo CD ApplicationSet manifests for daemon and gateway.
+  Argo CD ApplicationSet manifests:
+  - `manifests/argocd/otel-collector-daemon-appset.yaml`
+  - `manifests/argocd/otel-collector-gateway-appset.yaml`
 - `helm/otel-collector/values/common`  
   Shared mode-level values (for example, the generic gateway pipeline).
 - `helm/otel-collector/values/<env>`  
@@ -42,6 +44,99 @@ helm dependency update .\helm\otel-collector
 helm template otel-collector-daemon .\helm\otel-collector -f .\helm\otel-collector\values.yaml -f .\helm\otel-collector\values\dev\daemon.yaml
 helm template otel-collector-gateway .\helm\otel-collector -f .\helm\otel-collector\values.yaml -f .\helm\otel-collector\values\common\gateway.yaml -f .\helm\otel-collector\values\dev\gateway.yaml
 ```
+
+## Gateway Policy Model
+
+Gateway collector settings are layered:
+
+1. Base chart defaults: `helm/otel-collector/values.yaml`
+2. Shared gateway policy: `helm/otel-collector/values/common/gateway.yaml`
+3. Environment override: `helm/otel-collector/values/<env>/gateway.yaml`
+
+This keeps a single generic gateway pipeline while allowing minimal per-environment differences.
+
+### Enabled By Default In Shared Gateway Policy
+
+Defined in `helm/otel-collector/values/common/gateway.yaml`:
+
+1. Log noise filtering (`filter/logs_volume`)
+2. Large log body replacement (`transform/log_body_limit`) with:
+   `log message was too long and was blocked`
+3. Sensitive key masking (`redaction.blocked_key_patterns`)
+4. Sensitive value masking (`redaction.blocked_values`)
+5. Tail sampling (baseline defaults to 100%, env-overridable)
+
+### Environment-Specific Overrides
+
+Keep these small and focused:
+
+1. `dev`: baseline sampling is set to 50%
+2. `sit`, `uat`, `prod`: baseline sampling is set to 10%
+3. `prod`: traces and logs explicitly keep volume controls and redaction enabled in pipeline processors
+
+### Modular Policy Authoring (Recommended)
+
+To avoid managing all rules in one large YAML, define policy fragments and render env values files:
+
+1. Reusable modules: `policies/gateway/modules/*.mjs`
+2. Env composition: `policies/gateway/env/<env>.mjs`
+3. Renderer: `tools/render-gateway-values.mjs`
+4. Generated output: `helm/otel-collector/values/<env>/gateway.yaml`
+
+Process flow:
+
+```mermaid
+flowchart LR
+  A[Author policy module<br/>policies/gateway/modules] --> B[Compose env rules<br/>policies/gateway/env/dev.mjs]
+  B --> C[Render env values<br/>node tools/render-gateway-values.mjs dev]
+  C --> D[Generated Helm values<br/>helm/otel-collector/values/dev/gateway.yaml]
+  B --> E[Generate reports<br/>node tools/report-gateway-policies.mjs]
+  E --> F[Business report<br/>reports/policies-business.md]
+  E --> G[Technical report<br/>reports/policies-technical.json]
+  D --> H[Helm validate/template]
+  F --> I[GitHub Actions artifact]
+  G --> I
+```
+
+Render examples:
+
+```powershell
+node .\tools\render-gateway-values.mjs dev
+node .\tools\render-gateway-values.mjs sit
+node .\tools\render-gateway-values.mjs uat
+node .\tools\render-gateway-values.mjs prod
+```
+
+Dev currently includes an example service-level masking rule in the generated file:
+- `order-service` log attribute `userEmail` is set to `[REDACTED]`.
+- `payment-service` log body `clientId` value is scrubbed to `[REDACTED]` (including JSON-like message text patterns).
+
+Typical change workflow for a new rule:
+
+1. Add/update module logic in `policies/gateway/modules/*.mjs`.
+2. Add rule metadata + fragment in `policies/gateway/env/<env>.mjs`.
+3. Render values: `node .\tools\render-gateway-values.mjs <env>`.
+4. Regenerate reports: `node .\tools\report-gateway-policies.mjs`.
+5. Validate render: `helm template ... -f .\helm\otel-collector\values\<env>\gateway.yaml`.
+6. Commit policy source + generated values + reports.
+
+Generate policy reports:
+
+```powershell
+node .\tools\report-gateway-policies.mjs
+```
+
+Outputs:
+- `reports/policies-business.md`
+- `reports/policies-technical.json`
+
+### Optional Targeted Rules
+
+If specific services or namespaces are noisy, add OTTL filters in
+`helm/otel-collector/values/<env>/gateway.yaml` using resource attributes, for example:
+
+- `resource.attributes["k8s.namespace.name"]`
+- `resource.attributes["service.name"]`
 
 ### Things to Watch
 

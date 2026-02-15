@@ -3,11 +3,14 @@ opentelemetry-collector:
     processors:
       tail_sampling:
         policies:
-          - name: errors
-            type: status_code
+          -
+            name: 'errors'
+            type: 'status_code'
             status_code:
-              status_codes: [ERROR]
-          - name: baseline
-            type: probabilistic
+              status_codes:
+                - 'ERROR'
+          -
+            name: 'baseline'
+            type: 'probabilistic'
             probabilistic:
-              sampling_percentage: 100
+              sampling_percentage: 10
