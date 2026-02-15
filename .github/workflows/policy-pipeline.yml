@@ -20,6 +20,7 @@ jobs:
 
       - name: Render Gateway Values
         run: |
+          node tools/guard-appset-envs.mjs
           node tools/render-gateway-values.mjs dev
           node tools/render-gateway-values.mjs sit
           node tools/render-gateway-values.mjs uat

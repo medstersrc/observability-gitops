@@ -1,0 +1,51 @@
+name: Promote Dev To Sit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Promote Dev To Sit
+        run: node tools/promote-env.mjs dev sit
+
+      - name: Validate SIT Templates
+        run: |
+          helm template otel-collector-daemon helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/sit/daemon.yaml > /dev/null
+          helm template otel-collector-gateway helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/common/gateway.yaml \
+            -f helm/otel-collector/values/sit/gateway.yaml > /dev/null
+
+      - name: Create Promotion PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "promote: dev -> sit"
+          branch: "promote/dev-to-sit-${{ github.run_id }}"
+          title: "Promote Dev to SIT"
+          body: "Automated promotion from dev to sit."
+          labels: promotion
+          add-paths: |
+            policies/gateway/env/sit.mjs
+            helm/otel-collector/values/sit/daemon.yaml
+            helm/otel-collector/values/sit/gateway.yaml
+            reports/policies-business.md
+            reports/policies-technical.json

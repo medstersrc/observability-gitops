@@ -1,0 +1,51 @@
+name: Promote Sit To Uat
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Promote Sit To Uat
+        run: node tools/promote-env.mjs sit uat
+
+      - name: Validate UAT Templates
+        run: |
+          helm template otel-collector-daemon helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/uat/daemon.yaml > /dev/null
+          helm template otel-collector-gateway helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/common/gateway.yaml \
+            -f helm/otel-collector/values/uat/gateway.yaml > /dev/null
+
+      - name: Create Promotion PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "promote: sit -> uat"
+          branch: "promote/sit-to-uat-${{ github.run_id }}"
+          title: "Promote SIT to UAT"
+          body: "Automated promotion from sit to uat."
+          labels: promotion
+          add-paths: |
+            policies/gateway/env/uat.mjs
+            helm/otel-collector/values/uat/daemon.yaml
+            helm/otel-collector/values/uat/gateway.yaml
+            reports/policies-business.md
+            reports/policies-technical.json

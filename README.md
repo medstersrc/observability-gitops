@@ -11,10 +11,12 @@ Both modes use a single wrapper chart and different values overrides.
 
 - `helm/otel-collector`  
   Wrapper chart that depends on `opentelemetry-collector` and hosts shared defaults.
-- `manifests/argocd`  
-  Argo CD ApplicationSet manifests:
-  - `manifests/argocd/otel-collector-daemon-appset.yaml`
-  - `manifests/argocd/otel-collector-gateway-appset.yaml`
+- `app/manifests/<env>`  
+  Environment-scoped Argo CD ApplicationSet manifests:
+  - `app/manifests/dev/*`
+  - `app/manifests/sit/*`
+  - `app/manifests/uat/*`
+  - `app/manifests/prod/*`
 - `helm/otel-collector/values/common`  
   Shared mode-level values (for example, the generic gateway pipeline).
 - `helm/otel-collector/values/<env>`  
@@ -151,25 +153,48 @@ Some environments restrict adding Helm parameters in the UI. This repo sets a de
 `opentelemetry-collector.mode: daemonset` in `helm/otel-collector/values.yaml` so Application
 creation succeeds without additional parameters. Gateway overrides set `mode: deployment`.
 
-## Creating Apps In Argo CD (UI)
+## Argo CD Setup (Environment Scoped)
+
+Create one bootstrap Argo CD `Application` per environment that points to:
+
+1. `app/manifests/dev`
+2. `app/manifests/sit`
+3. `app/manifests/uat`
+4. `app/manifests/prod`
+
+Each environment path defines its own single-env daemon and gateway `ApplicationSet`.
+
+### Dev Bootstrap Example (UI)
 
 1. Open Argo CD and click **New App**.
 2. Set:
-   - **Application Name**: `otel-collector-daemon-dev` (or your naming standard)
+   - **Application Name**: `observability-dev-appsets`
    - **Project**: `default`
-   - **Sync Policy**: `Automatic` (optional, but matches the ApplicationSets)
+   - **Sync Policy**: `Automatic` (optional but recommended)
 3. In **Source**:
    - **Repository URL**: your Git repo URL
    - **Revision**: `main`
-   - **Path**: `helm/otel-collector`
+   - **Path**: `app/manifests/dev`
 4. In **Destination**:
    - **Cluster URL**: `https://kubernetes.default.svc`
-   - **Namespace**: `observability-dev`
-5. Click **Create**.
+   - **Namespace**: `argocd`
+5. Click **Create** and then **Sync**.
 
-To create the gateway app, repeat the above and use a gateway values file override via
-the ApplicationSet (recommended). If you must create it manually, use the same chart path
-and ensure `opentelemetry-collector.mode` resolves to `deployment` via the gateway values file.
+## Promotion Workflows
+
+Promotion is manual and sequential:
+
+1. `dev -> sit`: `.github/workflows/promote-dev-to-sit.yml`
+2. `sit -> uat`: `.github/workflows/promote-sit-to-uat.yml`
+3. `uat -> prod`: `.github/workflows/promote-uat-to-prod.yml`
+
+Each workflow:
+
+1. Promotes policy + values using `tools/promote-env.mjs`
+2. Re-renders target gateway values
+3. Regenerates policy reports
+4. Validates Helm templates for target environment
+5. Opens a promotion PR for approval
 
 ## Java Agent (PoC) - Example (order-service)
 
