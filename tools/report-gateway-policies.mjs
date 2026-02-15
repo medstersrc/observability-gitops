@@ -14,7 +14,13 @@ function toRuleRecord(env, rule) {
     action,
     services = ["*"],
     namespaces = ["*"],
+    fragment,
   } = rule;
+
+  const samplingPercentage =
+    fragment?.opentelemetryCollector?.config?.processors?.tail_sampling?.policies?.find(
+      (policy) => policy?.name === "baseline" && policy?.type === "probabilistic"
+    )?.probabilistic?.sampling_percentage;
 
   return {
     env,
@@ -26,6 +32,7 @@ function toRuleRecord(env, rule) {
     action,
     services,
     namespaces,
+    samplingPercentage,
   };
 }
 
@@ -56,6 +63,9 @@ function toBusinessMarkdown(records) {
       lines.push(`- Action: ${record.action}`);
       lines.push(`- Services: ${record.services.join(", ")}`);
       lines.push(`- Namespaces: ${record.namespaces.join(", ")}`);
+      if (record.samplingPercentage !== undefined) {
+        lines.push(`- Sampling: ${record.samplingPercentage}%`);
+      }
       lines.push("");
     }
   }
