@@ -1,0 +1,32 @@
+opentelemetry-collector:
+  config:
+    processors:
+      tail_sampling:
+        policies:
+          -
+            name: 'errors'
+            type: 'status_code'
+            status_code:
+              status_codes:
+                - 'ERROR'
+          -
+            name: 'baseline'
+            type: 'probabilistic'
+            probabilistic:
+              sampling_percentage: 10
+    service:
+      pipelines:
+        traces:
+          processors:
+            - 'filter/traces_volume'
+            - 'tail_sampling'
+            - 'redaction'
+            - 'memory_limiter'
+            - 'batch'
+        logs:
+          processors:
+            - 'filter/logs_volume'
+            - 'transform/log_body_limit'
+            - 'redaction'
+            - 'memory_limiter'
+            - 'batch'

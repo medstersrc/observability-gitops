@@ -1,0 +1,43 @@
+opentelemetry-collector:
+  config:
+    processors:
+      tail_sampling:
+        policies:
+          -
+            name: 'errors'
+            type: 'status_code'
+            status_code:
+              status_codes:
+                - 'ERROR'
+          -
+            name: 'baseline'
+            type: 'probabilistic'
+            probabilistic:
+              sampling_percentage: 50
+      'transform/order-service_userEmail_mask':
+        error_mode: 'ignore'
+        log_statements:
+          -
+            context: 'log'
+            statements:
+              - 'set(attributes["userEmail"], "[REDACTED]") where resource.attributes["service.name"] == "order-service" and attributes["userEmail"] != nil'
+      'transform/payment-service_clientId_body_mask':
+        error_mode: 'ignore'
+        log_statements:
+          -
+            context: 'log'
+            statements:
+              - 'replace_pattern(log.body, "(?i)(\"clientId\"\s*:\s*\")([^\"]+)(\")", "$1[REDACTED]$3") where resource.attributes["service.name"] == "payment-service" and IsString(log.body)'
+              - 'replace_pattern(log.body, "(?i)(clientId\s*[=:]\s*)([^,\s\}\]\"'']+)", "$1[REDACTED]") where resource.attributes["service.name"] == "payment-service" and IsString(log.body)'
+    service:
+      pipelines:
+        traces:
+          processors:
+            - 'filter/traces_volume'
+            - 'tail_sampling'
+        logs:
+          processors:
+            - 'filter/logs_volume'
+            - 'transform/order-service_userEmail_mask'
+            - 'transform/payment-service_clientId_body_mask'
+  replicaCount: 1

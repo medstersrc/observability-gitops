@@ -1,0 +1,91 @@
+opentelemetry-collector:
+  mode: deployment
+  fullnameOverride: otel-collector-gateway
+
+  config:
+    exporters:
+      otlp/newrelic:
+        endpoint: ${env:NEW_RELIC_OTLP_ENDPOINT}
+        headers:
+          api-key: ${env:NEW_RELIC_API_KEY}
+
+    processors:
+      # Drop actuator and other high-volume/low-value traces.
+      filter/traces_volume:
+        error_mode: ignore
+        traces:
+          span:
+            - 'IsMatch(attributes["http.url"], ".*/actuator.*")'
+            - 'IsMatch(attributes["url.full"], ".*/actuator.*")'
+            - 'IsMatch(name, ".*actuator.*")'
+
+      # Drop known infra/noise logs.
+      filter/logs_volume:
+        error_mode: ignore
+        logs:
+          log_record:
+            - 'resource.attributes["k8s.container.name"] == "istio-proxy"'
+            - 'resource.attributes["k8s.container.name"] == "linkerd-proxy"'
+
+      # Replace oversized log bodies with a fixed message.
+      transform/log_body_limit:
+        error_mode: ignore
+        log_statements:
+          - 'set(log.body, "log message was too long and was blocked") where IsString(log.body) and Len(log.body) > 8192'
+
+      # Mask sensitive keys and regex-matched values.
+      redaction:
+        allow_all_keys: true
+        blocked_key_patterns:
+          - ".*password.*"
+          - ".*secret.*"
+          - ".*token.*"
+          - ".*api_key.*"
+          - ".*authorization.*"
+          - ".*cookie.*"
+        blocked_values:
+          - "\\b[0-9]{3}-[0-9]{2}-[0-9]{4}\\b"
+          - "4[0-9]{12}(?:[0-9]{3})?"
+          - "(5[1-5][0-9]{14})"
+          - "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+        summary: silent
+
+      tail_sampling:
+        decision_wait: 5s
+        num_traces: 20000
+        policies:
+          - name: errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: baseline
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 100
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [filter/traces_volume, tail_sampling, redaction, memory_limiter, batch]
+          exporters: [otlp/newrelic]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [otlp]
+          # Feature flags are controlled by this processor list:
+          # - remove redaction to disable sensitive-data masking
+          # - remove transform/log_body_limit to stop large-message replacement
+          processors: [filter/logs_volume, transform/log_body_limit, redaction, memory_limiter, batch]
+          exporters: [otlp/newrelic]
+
+  extraEnvs:
+    - name: NEW_RELIC_OTLP_ENDPOINT
+      value: "https://otlp.eu01.nr-data.net:4317"
+    - name: NEW_RELIC_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: newrelic-otlp
+          key: api-key

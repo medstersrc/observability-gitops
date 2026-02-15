@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: otel-collector-gateway
+  name: otel-collector-daemon
   namespace: argocd
 spec:
   generators:
@@ -19,7 +19,7 @@ spec:
   template:
     metadata:
       # Application name is templated per environment.
-      name: otel-collector-gateway-{{env}}
+      name: otel-collector-daemon-{{env}}
     spec:
       project: default
       source:
@@ -30,8 +30,8 @@ spec:
         helm:
           valueFiles:
             - values.yaml
-            # Values file is resolved relative to the chart path.
-            - ../overrides/{{env}}/gateway-values.yaml
+            # Values files are resolved relative to the chart path.
+            - values/{{env}}/daemon.yaml
       destination:
         server: https://kubernetes.default.svc
         namespace: {{ns}}

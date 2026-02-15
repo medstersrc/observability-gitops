@@ -1,0 +1,109 @@
+name: Policy Pipeline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  render-values:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Render Gateway Values
+        run: |
+          node tools/render-gateway-values.mjs dev
+          node tools/render-gateway-values.mjs sit
+          node tools/render-gateway-values.mjs uat
+          node tools/render-gateway-values.mjs prod
+
+      - name: Upload Rendered Values
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-gateway-values
+          path: |
+            helm/otel-collector/values/dev/gateway.yaml
+            helm/otel-collector/values/sit/gateway.yaml
+            helm/otel-collector/values/uat/gateway.yaml
+            helm/otel-collector/values/prod/gateway.yaml
+
+  validate-values:
+    needs: render-values
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, sit, uat, prod]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Download Rendered Values
+        uses: actions/download-artifact@v4
+        with:
+          name: rendered-gateway-values
+          path: .
+
+      - name: Validate Helm Template
+        run: |
+          helm template otel-collector-gateway helm/otel-collector \
+            -f helm/otel-collector/values.yaml \
+            -f helm/otel-collector/values/common/gateway.yaml \
+            -f helm/otel-collector/values/${{ matrix.env }}/gateway.yaml \
+            > /dev/null
+
+  generate-reports:
+    needs: validate-values
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate Policy Reports
+        run: node tools/report-gateway-policies.mjs
+
+      - name: Upload Policy Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-reports-pipeline
+          path: |
+            reports/policies-business.md
+            reports/policies-technical.json
+
+  verify-generated-files:
+    needs: generate-reports
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Re-render Values And Reports
+        run: |
+          node tools/render-gateway-values.mjs dev
+          node tools/render-gateway-values.mjs sit
+          node tools/render-gateway-values.mjs uat
+          node tools/render-gateway-values.mjs prod
+          node tools/report-gateway-policies.mjs
+
+      - name: Verify Generated Files Are Committed
+        run: git diff --exit-code -- helm/otel-collector/values/dev/gateway.yaml helm/otel-collector/values/sit/gateway.yaml helm/otel-collector/values/uat/gateway.yaml helm/otel-collector/values/prod/gateway.yaml reports/policies-business.md reports/policies-technical.json
