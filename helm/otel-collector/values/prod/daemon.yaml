@@ -1,0 +1,26 @@
+opentelemetry-collector:
+  mode: daemonset
+  fullnameOverride: otel-collector-daemon
+  service:
+    enabled: true
+    internalTrafficPolicy: Local
+  config:
+    exporters:
+      otlp/gateway:
+        endpoint: otel-collector-gateway.observability-prod.svc.cluster.local:4317
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/gateway]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/gateway]
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/gateway]

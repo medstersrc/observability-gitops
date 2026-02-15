@@ -1,0 +1,14 @@
+opentelemetry-collector:
+  replicaCount: 1
+  config:
+    processors:
+      tail_sampling:
+        policies:
+          - name: errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: baseline
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
