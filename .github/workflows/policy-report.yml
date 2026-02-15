@@ -1,10 +1,7 @@
 name: Policy Report
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   generate-policy-report:
