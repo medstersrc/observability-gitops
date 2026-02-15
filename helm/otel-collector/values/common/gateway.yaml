@@ -3,6 +3,14 @@ opentelemetry-collector:
   fullnameOverride: otel-collector-gateway
 
   config:
+    connectors:
+      spanmetrics:
+        dimensions:
+          - name: service.name
+          - name: span.name
+          - name: status.code
+          - name: job.name
+
     exporters:
       otlp/newrelic:
         endpoint: ${env:NEW_RELIC_OTLP_ENDPOINT}
@@ -68,9 +76,9 @@ opentelemetry-collector:
         traces:
           receivers: [otlp]
           processors: [filter/traces_volume, tail_sampling, redaction, memory_limiter, batch]
-          exporters: [otlp/newrelic]
+          exporters: [otlp/newrelic, spanmetrics]
         metrics:
-          receivers: [otlp]
+          receivers: [otlp, spanmetrics]
           processors: [memory_limiter, batch]
           exporters: [otlp/newrelic]
         logs:
