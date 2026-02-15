@@ -36,7 +36,7 @@ export function maskLogBodyClientIdForService(serviceName, replacement = "[REDAC
                 context: "log",
                 statements: [
                   `replace_pattern(log.body, "(?i)(\\"clientId\\"[[:space:]]*:[[:space:]]*\\")([^\\"]+)(\\")", "$1${replacement}$3") where resource.attributes["service.name"] == "${serviceName}" and IsString(log.body)`,
-                  `replace_pattern(log.body, "(?i)(clientId[[:space:]]*[=:][[:space:]]*)([^,[:space:]\\}\\]\\\"']+)", "$1${replacement}") where resource.attributes["service.name"] == "${serviceName}" and IsString(log.body)`,
+                  `replace_pattern(log.body, "(?i)(clientId[[:space:]]*[=:][[:space:]]*)([^,[:space:]]+)", "$1${replacement}") where resource.attributes["service.name"] == "${serviceName}" and IsString(log.body)`,
                 ],
               },
             ],
