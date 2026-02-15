@@ -11,10 +11,12 @@ Both modes use a single wrapper chart and different values overrides.
 
 - `helm/otel-collector`  
   Wrapper chart that depends on `opentelemetry-collector` and hosts shared defaults.
-- `helm/apps`  
+- `manifests/argocd`  
   Argo CD ApplicationSet manifests for daemon and gateway.
-- `helm/overrides/<env>`  
-  Environment overrides. Each mode has its own values file.
+- `helm/otel-collector/values/common`  
+  Shared mode-level values (for example, the generic gateway pipeline).
+- `helm/otel-collector/values/<env>`  
+  Environment overrides (for example, sampling percentage).
 
 ## Upgrade OpenTelemetry Collector Chart
 
@@ -37,8 +39,8 @@ helm dependency update .\helm\otel-collector
 ### Validate Render (Dev)
 
 ```powershell
-helm template otel-collector-daemon .\helm\otel-collector -f .\helm\otel-collector\values.yaml -f .\helm\overrides\dev\daemon-values.yaml
-helm template otel-collector-gateway .\helm\otel-collector -f .\helm\otel-collector\values.yaml -f .\helm\overrides\dev\gateway-values.yaml
+helm template otel-collector-daemon .\helm\otel-collector -f .\helm\otel-collector\values.yaml -f .\helm\otel-collector\values\dev\daemon.yaml
+helm template otel-collector-gateway .\helm\otel-collector -f .\helm\otel-collector\values.yaml -f .\helm\otel-collector\values\common\gateway.yaml -f .\helm\otel-collector\values\dev\gateway.yaml
 ```
 
 ### Things to Watch
