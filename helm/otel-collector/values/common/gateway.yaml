@@ -36,7 +36,9 @@ opentelemetry-collector:
       transform/log_body_limit:
         error_mode: ignore
         log_statements:
-          - 'set(log.body, "log message was too long and was blocked") where IsString(log.body) and Len(log.body) > 8192'
+          - context: log
+            statements:
+              - 'set(log.body, "log message was too long and was blocked") where IsString(log.body) and Len(log.body) > 8192'
 
       # Mask sensitive keys and regex-matched values.
       redaction:
