@@ -10,17 +10,19 @@ opentelemetry-collector:
         endpoint: otel-collector-gateway.observability-uat.svc.cluster.local:4317
         tls:
           insecure: true
+      debug:
+        verbosity: normal
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [otlp/gateway]
+          exporters: [otlp/gateway, debug]
         metrics:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [otlp/gateway]
+          exporters: [otlp/gateway, debug]
         logs:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [otlp/gateway]
+          exporters: [otlp/gateway, debug]
