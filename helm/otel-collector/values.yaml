@@ -16,15 +16,15 @@ opentelemetry-collector:
       batch: {}
 
     exporters:
-      debug:
-        verbosity: detailed
+      logging:
+        loglevel: info
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [debug]
+          exporters: [logging]
 
   ports:
     jaeger-compact:
