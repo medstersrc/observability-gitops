@@ -41,13 +41,13 @@ opentelemetry-collector:
       # Mask sensitive keys and regex-matched values.
       redaction:
         allow_all_keys: true
-        blocked_key_patterns:
-          - ".*password.*"
-          - ".*secret.*"
-          - ".*token.*"
-          - ".*api_key.*"
-          - ".*authorization.*"
-          - ".*cookie.*"
+       # blocked_key_patterns:
+       #   - ".*password.*"
+       #   - ".*secret.*"
+       #   - ".*token.*"
+       #   - ".*api_key.*"
+       #   - ".*authorization.*"
+       #   - ".*cookie.*"
         blocked_values:
           - "\\b[0-9]{3}-[0-9]{2}-[0-9]{4}\\b"
           - "4[0-9]{12}(?:[0-9]{3})?"
