@@ -47,17 +47,6 @@ This updates:
 2. `helm/otel-collector/values.yaml` image tag
 3. `helm/otel-collector/Chart.lock` and `helm/otel-collector/charts/*.tgz` via `helm dependency update`
 
-### Version Alignment Guard (CI)
-
-CI validates that:
-
-1. `helm/otel-collector/Chart.yaml` dependency version for `opentelemetry-collector`
-2. `helm/otel-collector/values.yaml` `opentelemetry-collector.image.tag`
-
-are exactly the same. The check is implemented in:
-
-- `tools/check-otel-collector-version-alignment.sh`
-
 ### Commands (PowerShell)
 
 ```powershell
