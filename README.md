@@ -33,6 +33,31 @@ When upgrading the upstream `opentelemetry-collector` chart:
 3. Refresh the vendored dependency:
    - Run `helm dependency update` to regenerate `Chart.lock` and `charts/opentelemetry-collector-<version>.tgz`.
 
+### Recommended: Single Command Version Update
+
+Use the helper script to keep dependency version and image tag in sync, then refresh dependencies:
+
+```bash
+tools/update-otel-collector-version.sh 0.77.0
+```
+
+This updates:
+
+1. `helm/otel-collector/Chart.yaml` dependency version
+2. `helm/otel-collector/values.yaml` image tag
+3. `helm/otel-collector/Chart.lock` and `helm/otel-collector/charts/*.tgz` via `helm dependency update`
+
+### Version Alignment Guard (CI)
+
+CI validates that:
+
+1. `helm/otel-collector/Chart.yaml` dependency version for `opentelemetry-collector`
+2. `helm/otel-collector/values.yaml` `opentelemetry-collector.image.tag`
+
+are exactly the same. The check is implemented in:
+
+- `tools/check-otel-collector-version-alignment.sh`
+
 ### Commands (PowerShell)
 
 ```powershell

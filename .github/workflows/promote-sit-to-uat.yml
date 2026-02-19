@@ -22,6 +22,17 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
+      - name: Verify Collector Version Alignment
+        run: bash tools/check-otel-collector-version-alignment.sh
+
+      - name: Add Helm Repositories
+        run: |
+          helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo update
+
+      - name: Build Helm Dependencies
+        run: helm dependency build helm/otel-collector
+
       - name: Promote Sit To Uat
         run: node tools/promote-env.mjs sit uat
 
