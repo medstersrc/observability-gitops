@@ -1,0 +1,74 @@
+  agent-values.yaml
+
+  opentelemetry-collector:
+    mode: daemonset
+    fullnameOverride: otel-collector-daemon
+
+    config:
+      receivers:
+        otlp:
+          protocols:
+            grpc: {}
+            http: {}
+
+      processors:
+        batch: {}
+
+      exporters:
+        otlp/gateway:
+          endpoint: otel-collector-gateway.<namespace>.svc.cluster.local:4317
+          tls:
+            insecure: true
+        debug:
+          verbosity: normal
+
+      service:
+        pipelines:
+          traces:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [otlp/gateway, debug]
+          metrics:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [otlp/gateway, debug]
+          logs:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [otlp/gateway, debug]
+
+  gateway-values.yaml
+
+  opentelemetry-collector:
+    mode: deployment
+    fullnameOverride: otel-collector-gateway
+    replicaCount: 1
+
+    config:
+      receivers:
+        otlp:
+          protocols:
+            grpc: {}
+            http: {}
+
+      processors:
+        batch: {}
+
+      exporters:
+        debug:
+          verbosity: normal
+
+      service:
+        pipelines:
+          traces:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [debug]
+          metrics:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [debug]
+          logs:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [debug]

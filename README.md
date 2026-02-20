@@ -221,6 +221,7 @@ This section mirrors the values and template style used by those charts.
 
 ```yaml
 otel:
+  enabled: true
   endpoint: "" # optional override
   collectorService: "otel-collector-daemon"
   collectorNamespace: "" # defaults to .Release.Namespace
@@ -235,6 +236,7 @@ otel:
 ### Deployment Template (app chart)
 
 ```yaml
+{{- if .Values.otel.enabled }}
 initContainers:
   - name: otel-agent
     image: curlimages/curl:8.5.0
@@ -247,10 +249,12 @@ initContainers:
     volumeMounts:
       - name: otel-agent
         mountPath: /otel
+{{- end }}
 
 containers:
   - name: my-service
     env:
+      {{- if .Values.otel.enabled }}
       - name: JAVA_TOOL_OPTIONS
         value: "-javaagent:/otel/javaagent.jar"
       - name: OTEL_SERVICE_NAME
@@ -267,13 +271,18 @@ containers:
         value: {{ .Values.otel.logsExporter }}
       - name: OTEL_METRICS_EXPORTER
         value: {{ .Values.otel.metricsExporter }}
+      {{- end }}
     volumeMounts:
+      {{- if .Values.otel.enabled }}
       - mountPath: /otel
         name: otel-agent
+      {{- end }}
 
+{{- if .Values.otel.enabled }}
 volumes:
   - name: otel-agent
     emptyDir: {}
+{{- end }}
 ```
 
 ### Notes
@@ -285,6 +294,7 @@ volumes:
    `http://otel-collector-daemon.<release-namespace>.svc.cluster.local:4317`
 4. Override `otel.endpoint` only when you intentionally need a different target.
 5. If you pin the agent version, update the URL in the init container.
+6. Set `otel.enabled: false` to exclude the Java agent completely.
 
 ## New Relic Secret
 
